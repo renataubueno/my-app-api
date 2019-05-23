@@ -112,7 +112,7 @@ function simulacao(fila, entrada, numChegadasMax, seed){
 
 
       numChegadas++;
-      if(numChegadas === 5){
+      if(numChegadas === numChegadasMax){
         break;
       }
       if(condicaoFila < capacidade){
@@ -206,12 +206,15 @@ function simulacao(fila, entrada, numChegadasMax, seed){
   //console.log('TEMPO OCUPADA: ', tempoOcupada);
   console.log('PROBABILIDADE DE ESTADOS DA FILA - FINAL: ', probEstadosFila);
 
+  let probEstadosFilaRetorno = probEstadosFila.filter(item => item.tipo !== null);//talvez isso n reflita o status real da fila
+  console.log('probEstadosFilaRetorno ', probEstadosFilaRetorno);
+
   return {
     numChegadas: numChegadas,
     numAtendimentos: numAtendimentos,
     tempoOcupada: tempoOcupada,
     tempoTotal: tempoTotal,
-    probEstadosFila: probEstadosFila
+    probEstadosFila: probEstadosFilaRetorno
   };
 }
 
