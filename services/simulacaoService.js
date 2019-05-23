@@ -6,7 +6,7 @@ let escalonador = [];
 exports.simulacaoGET = function () {
   return {
       id: 1,
-      numChegadas: "Abacate",
+      numChegadas: "Abacaxi",
       numAtendimentos: "B",
       tempoOcupada: "C",
       taxaChegada: "A/T",
