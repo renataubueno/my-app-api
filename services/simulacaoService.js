@@ -471,9 +471,11 @@ function calculaProbabilidadesEstadosFila(tempoTotal, probEstadosFila){
 
   for(let i = 0; i < probEstadosFila.length; i++){
     console.log('QUAL O VALOR DO probEstadosFila[i]? ', probEstadosFila[i]);
-    x = (probEstadosFila[i] * 100)/tempoTotal;
-    if(x == NaN){
+    if(probEstadosFila[i] === undefined) {
+      console.log('ENTREI NO CASO DO UNDEFINED');
       x = 0;
+    } else {
+      x = (probEstadosFila[i] * 100)/tempoTotal;
     }
     probEstadosFilaTratado.push(x);
   }
