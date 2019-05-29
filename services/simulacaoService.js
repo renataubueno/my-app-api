@@ -26,8 +26,6 @@ exports.simulacaoGET = function () {
 exports.simulacaoPOST = function (dados) {
   let resultado = '';
   let fila = dados.objSimulacao.filter(item => item.tipo === 'UNIFORME');
-  let entrada = dados.objSimulacao.filter(item => item.tipo === 'ENTRADA');
-  let saida = dados.objSimulacao.filter(item => item.tipo === 'SAIDA');
 
   let seed = dados.seeder;
 
@@ -39,7 +37,7 @@ exports.simulacaoPOST = function (dados) {
 
   console.log('ANTES DE ENTRAR NA SIMULACAO');
   if(dados.tipoParada === 'CHEGADAS'){
-    let resultado = simulacaoSimplesChegada(fila, entrada, numChegadasMax, seed);
+    let resultado = simulacaoSimplesChegada(fila, numChegadasMax, seed);
 
     let numChegadas = resultado.numChegadas;
     let numAtendimentos = resultado.numAtendimentos;
@@ -64,7 +62,7 @@ exports.simulacaoPOST = function (dados) {
         probabilidadesEstadosFila: probabilidadesEstadosFila
     };
   } else {
-    let resultado = simulacaoSimplesTempo(fila, entrada, tempoMax, seed);
+    let resultado = simulacaoSimplesTempo(fila, tempoMax, seed);
 
     let numChegadas = resultado.numChegadas;
     let numAtendimentos = resultado.numAtendimentos;
@@ -91,7 +89,7 @@ exports.simulacaoPOST = function (dados) {
   }
 }
 
-function simulacaoSimplesTempo(fila, entrada, tempoMax, seed){
+function simulacaoSimplesTempo(fila, tempoMax, seed){
   console.log('NA SIMULACAO');
 
   random.use(seedrandom(seed));
@@ -105,7 +103,9 @@ function simulacaoSimplesTempo(fila, entrada, tempoMax, seed){
   let maxServico = fila[0].maxServico;
   let capacidade = fila[0].capacidade;
   let servidores = fila[0].servidores;
-  let chegada = entrada[0].chegada;
+  let entrada = fila[0].chegadas.filter(item => item.origem === 'Entrada');
+  console.log('O QUE TENHO NESSA ENTRADA? ', entrada);
+  let chegada = parseInt(entrada[0].chegada);
   //criar variável de controle pra quantidade de usuários na fila e que já tenham sido atendidos (agendada a saida)
   probEstadosFila = Array(capacidade+1);
   let momentoAnterior = 0;
@@ -241,7 +241,7 @@ function simulacaoSimplesTempo(fila, entrada, tempoMax, seed){
   };
 }
 
-function simulacaoSimplesChegada(fila, entrada, numChegadasMax, seed){
+function simulacaoSimplesChegada(fila, numChegadasMax, seed){
   console.log('NA SIMULACAO');
 
   random.use(seedrandom(seed));
