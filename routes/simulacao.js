@@ -17,9 +17,9 @@ router.post('/', function(req, res, next) {
   /* apesar de já ser feita uma validação no front, devemos conferir se os mesmos dados são recebidos no back end */
   if(validar(body)){
     console.log('BODY: ', body);
-    let retorno = serviceSimulacao.simulacaoPOST(body);
-    console.log('RETORNO: ', retorno);
-    res.send(retorno);
+    let result = serviceSimulacao.simulacaoPOST(body);
+    console.log('RETORNO: ', result);
+    res.send(result);
   } else {
     console.log('Erro na Validação do Back End');
     res.status(400);
