@@ -4,8 +4,9 @@ var seedrandom = require('seedrandom');
 let numChegadasMax = 0;
 let tempoMax = 0;
 //criar as variaveis de retorno: numChegadas e numAtendimentos
-let numChegadas = 0;
-let numAtendimentos = 0;
+let numChegadasGlobal = 0;
+let numAtendimentosGlobal = 0;
+let escalonadorGlobal = [];
 
 exports.simulacaoGET = function () {
   return {
@@ -36,11 +37,56 @@ exports.simulacaoPOST = dados => {
 
   console.log('ANTES DE ENTRAR NA SIMULACAO');
   if(dados.tipoParada === 'CHEGADAS'){
-    fila.forEach(item => {
-      filaRetorno.push(tratamentoCondParadaChegadas(item, numChegadasMax, seed));
-    });
+    numChegadasGlobal = 0;
+    numAtendimentosGlobal = 0;
+    escalonadorGlobal = [];
+
+    for(let i = 0; i < fila.length; i++){
+      fila[i].probabilidadesEstadosFila = Array(fila[i].capacidade+1);
+    };
+    fila
+
+    /* Todas as filas com entradas externas */
+    let temEntrada = fila.filter(item => item.chegadas.filter(obj => obj.origem === 'Entrada'));
+    for(let i = 0; i < temEntrada.length; i++){
+      for(let j = 0; j < temEntrada[i].chegadas.length; j++){
+        if(temEntrada[i].chegadas[j].origem === 'Entrada'){
+          escalonadorGlobal.push({
+            fila: temEntrada[i],
+            momento: parseInt(temEntrada[i].chegadas[j].chegada),
+            tipo: 'CHEGADA'
+          });
+        };
+      };
+    };
+
+    while(numChegadasGlobal < numChegadasMax){
+      let nextFila = escalonadorGlobal[0].fila;
+      console.log('FILA! ', nextFila);
+      filaRetorno.push(tratamentoCondParadaChegadas(nextFila, numChegadasMax, seed));
+      console.log('NUMCHEGADASGLOBAL', numChegadasGlobal);
+    }
+
     return filaRetorno;
   } else {
+    numChegadasGlobal = 0;
+    numAtendimentosGlobal = 0;
+    escalonadorGlobal = [];
+
+    /* Todas as filas com entradas externas */
+    let temEntrada = fila.filter(item => item.chegadas.filter(obj => obj.origem === 'Entrada'));
+    for(let i = 0; i < temEntrada.length; i++){
+      for(let j = 0; j < temEntrada[i].chegadas.length; j++){
+        if(temEntrada[i].chegadas[j].origem === 'Entrada'){
+          escalonadorGlobal.push({
+            idFila: temEntrada[i].id,
+            momento: parseInt(temEntrada[i].chegadas[j].chegada),
+            tipo: 'CHEGADA'
+          });
+        };
+      };
+    };
+
     fila.forEach(item => {
       filaRetorno.push(tratamentoCondParadaTempo(item, tempoMax, seed));
     });
@@ -49,13 +95,15 @@ exports.simulacaoPOST = dados => {
 }
 
 function tratamentoCondParadaChegadas(fila, numChegadasMax, seed){
-  let resultado = simulacaoSimplesChegada(fila, numChegadasMax, seed);
+  console.log('CHEGUEI NO TRATAMENTO PARA CHEGADAS', fila);
+  let resultado = simulacaoChegada(fila, numChegadasMax, seed);
 
-  let numChegadas = resultado.numChegadas;
-  let numAtendimentos = resultado.numAtendimentos;
-  let tempoOcupada = resultado.tempoOcupada;
-  let tempoTotal = resultado.tempoTotal;
-  let probEstadosFila = resultado.probEstadosFila;
+  let numChegadas = fila.numChegadas;
+  let numAtendimentos = fila.numAtendimentos;
+  let tempoOcupada = fila.tempoOcupada;
+  let tempoTotal = fila.tempoTotal;
+  let probEstadosFila = fila.probabilidadesEstadosFila;
+
   let taxaChegada = calculaTaxaChegada(numChegadas, tempoTotal);
   let vazao = calculaVazao(tempoOcupada, tempoTotal);
   let utilizacao = calculaUtilizacao(numAtendimentos, tempoTotal);
@@ -76,13 +124,15 @@ function tratamentoCondParadaChegadas(fila, numChegadasMax, seed){
 }
 
 function tratamentoCondParadaTempo(fila, tempoMax, seed){
-  let resultado = simulacaoSimplesTempo(fila, tempoMax, seed);
+  let resultado = simulacaoTempo(fila, tempoMax, seed);
+  console.log('RESULTADO: ', true);
 
-  let numChegadas = resultado.numChegadas;
-  let numAtendimentos = resultado.numAtendimentos;
-  let tempoOcupada = resultado.tempoOcupada;
-  let tempoTotal = resultado.tempoTotal;
-  let probEstadosFila = resultado.probEstadosFila;
+  let numChegadas = fila.numChegadas;
+  let numAtendimentos = fila.numAtendimentos;
+  let tempoOcupada = fila.tempoOcupada;
+  let tempoTotal = fila.tempoTotal;
+  let probEstadosFila = fila.probabilidadesEstadosFila;
+
   let taxaChegada = calculaTaxaChegada(numChegadas, tempoTotal);
   let vazao = calculaVazao(tempoOcupada, tempoTotal);
   let utilizacao = calculaUtilizacao(numAtendimentos, tempoTotal);
@@ -102,7 +152,7 @@ function tratamentoCondParadaTempo(fila, tempoMax, seed){
   };
 }
 
-function simulacaoSimplesTempo(fila, tempoMax, seed){
+function simulacaoTempo(fila, tempoMax, seed){
   console.log('NA SIMULACAO');
 
   random.use(seedrandom(seed));
@@ -122,27 +172,21 @@ function simulacaoSimplesTempo(fila, tempoMax, seed){
   fila.probabilidadesEstadosFila = Array(capacidade+1);
   let momentoAnterior = 0;
   let momentoAtual = 0;
-  //reiniciar o escalonador
-  fila.escalonador = [];
-  fila.escalonador.push({
-    momento: chegada,
-    tipo: 'CHEGADA'});
-  fila.condicaoFila = 0;
-  numChegadas = 0;
-  numAtendimentos = 0;
 
   /* Algoritmo da simulação */
-  while(fila.escalonador.length !== 0 && momentoAnterior < tempoMax){
-    console.log('ESCALONADOR', fila.escalonador);
-    let next = fila.escalonador[0];
-    fila.escalonador.splice(0, 1);
+  while(escalonadorGlobal.length !== 0 && momentoAnterior < tempoMax){
+    console.log('ESCALONADOR', escalonadorGlobal);
+    let next = escalonadorGlobal[0];
+    escalonadorGlobal.splice(0, 1);
     /* Aqui começa o agendaChegada */
     if(next.tipo === 'CHEGADA'){
       //verificar quanto tempo a fila ficou com capacidade = 0, 1, 2...
       nextMomento = next.momento;
       momentoAtual = nextMomento - momentoAnterior;
       momentoAnterior = nextMomento;
-      numChegadas++;
+
+      fila.numChegadas++;
+      numChegadasGlobal++;
 
       agendarChegada(fila, capacidade, servidores, momentoAtual, nextMomento, minServico, maxServico, minChegada, maxChegada);
 
@@ -160,16 +204,13 @@ function simulacaoSimplesTempo(fila, tempoMax, seed){
   let tempoOcupada = momentoAnterior - fila.probabilidadesEstadosFila[0];
   console.log('PROBABILIDADE DE ESTADOS DA FILA - FINAL: ', fila.probabilidadesEstadosFila);
 
-  return {
-    numChegadas: numChegadas,
-    numAtendimentos: numAtendimentos,
-    tempoOcupada: tempoOcupada,
-    tempoTotal: tempoTotal,
-    probEstadosFila: fila.probabilidadesEstadosFila
-  };
+  fila.tempoOcupada = tempoOcupada;
+  fila.tempoTotal = tempoTotal;
+
+  return true;
 }
 
-function simulacaoSimplesChegada(fila, numChegadasMax, seed){
+function simulacaoChegada(fila, numChegadasMax, seed){
   console.log('NA SIMULACAO');
 
   random.use(seedrandom(seed));
@@ -183,27 +224,15 @@ function simulacaoSimplesChegada(fila, numChegadasMax, seed){
   let maxServico = fila.maxServico;
   let capacidade = fila.capacidade;
   let servidores = fila.servidores;
-  let entrada = fila.chegadas.filter(item => item.origem === 'Entrada');
-  let chegada = parseInt(entrada[0].chegada);
-  //criar variável de controle pra quantidade de usuários na fila e que já tenham sido atendidos (agendada a saida)
-  fila.probabilidadesEstadosFila = Array(capacidade+1);
   let momentoAnterior = 0;
   let momentoAtual = 0;
-  //reiniciar o escalonador
-  fila.escalonador = [];
-  fila.escalonador.push({
-    momento: chegada,
-    tipo: 'CHEGADA'});
-  fila.condicaoFila = 0;
-  numChegadas = 0;
-  numAtendimentos = 0;
 
   /* Algoritmo da simulação */
-  while(fila.escalonador.length !== 0 && numChegadas < numChegadasMax){
-    console.log('ESCALONADOR', fila.escalonador);
+  while(escalonadorGlobal.length !== 0 && numChegadasGlobal < numChegadasMax){
+    console.log('ESCALONADOR', escalonadorGlobal);
 
-    let next = fila.escalonador[0];
-    fila.escalonador.splice(0, 1);
+    let next = escalonadorGlobal[0];
+    escalonadorGlobal.splice(0, 1);
     /* Aqui começa o agendaChegada */
     if(next.tipo === 'CHEGADA'){
       //verificar quanto tempo a fila ficou com capacidade = 0, 1, 2...
@@ -211,15 +240,13 @@ function simulacaoSimplesChegada(fila, numChegadasMax, seed){
       momentoAtual = nextMomento - momentoAnterior;
       momentoAnterior = nextMomento;
 
-      numChegadas++;
-      if(numChegadas === numChegadasMax){
+      fila.numChegadas++;
+      numChegadasGlobal++;
+      if(numChegadasGlobal === numChegadasMax){
         break;
       }
       console.log('TENTANDO AGENDAR CHEGADA');
       agendarChegada(fila, capacidade, servidores, momentoAtual, nextMomento, minServico, maxServico, minChegada, maxChegada);
-
-
-
     /* Aqui começa o agendaSaida */
     } else {
       nextMomento = next.momento;
@@ -234,13 +261,10 @@ function simulacaoSimplesChegada(fila, numChegadasMax, seed){
   let tempoOcupada = momentoAnterior - fila.probabilidadesEstadosFila[0];
   console.log('PROBABILIDADE DE ESTADOS DA FILA - FINAL: ', fila.probabilidadesEstadosFila);
 
-  return {
-    numChegadas: numChegadas,
-    numAtendimentos: numAtendimentos,
-    tempoOcupada: tempoOcupada,
-    tempoTotal: tempoTotal,
-    probEstadosFila: fila.probabilidadesEstadosFila
-  };
+  fila.tempoOcupada = tempoOcupada;
+  fila.tempoTotal = tempoTotal;
+
+  return true;
 }
 
 function geraAleatorio(){
@@ -256,6 +280,7 @@ function uniforme(min, max){
 }
 
 function agendarChegada(fila, capacidade, servidores, momentoAtual, nextMomento, minServico, maxServico, minChegada, maxChegada){
+  console.log('FILA NO AGENDARCHEGADA: ', fila);
   if(fila.probabilidadesEstadosFila[fila.condicaoFila] === undefined){
     fila.probabilidadesEstadosFila[fila.condicaoFila] = momentoAtual;
   } else {
@@ -267,21 +292,23 @@ function agendarChegada(fila, capacidade, servidores, momentoAtual, nextMomento,
     if(fila.condicaoFila <= servidores){
       let agendaSaida = nextMomento + uniforme(minServico, maxServico);
 
-      if(fila.escalonador.length === 0){
-        fila.escalonador.push({
+      if(escalonadorGlobal.length === 0){
+        escalonadorGlobal.push({
+          fila: fila,
           momento: agendaSaida,
           tipo: 'SAIDA'
         });
       } else {
-        for(let i = 0; i < fila.escalonador.length; i++){
-          if(fila.escalonador.length === i+1 && fila.escalonador[i].momento < agendaSaida){
-            fila.escalonador.push({
+        for(let i = 0; i < escalonadorGlobal.length; i++){
+          if(escalonadorGlobal.length === i+1 && escalonadorGlobal[i].momento < agendaSaida){
+            escalonadorGlobal.push({
+              fila: fila,
               momento: agendaSaida,
               tipo: 'SAIDA'
             });
             break;
-          } else if(fila.escalonador[i].momento > agendaSaida){
-            fila.escalonador.splice(i, 0, {momento: agendaSaida, tipo: 'SAIDA'});
+          } else if(escalonadorGlobal[i].momento > agendaSaida){
+            escalonadorGlobal.splice(i, 0, {fila: fila, momento: agendaSaida, tipo: 'SAIDA'});
             break;
           }
         }
@@ -291,19 +318,21 @@ function agendarChegada(fila, capacidade, servidores, momentoAtual, nextMomento,
 
   let agendaChegada =  nextMomento + uniforme(minChegada, maxChegada);
 
-  if(fila.escalonador.length === 0){
-    fila.escalonador.push({
+  if(escalonadorGlobal.length === 0){
+    escalonadorGlobal.push({
+      fila: fila,
       momento: agendaChegada,
       tipo: 'CHEGADA'});
   } else {
-    for(let i = 0; i < fila.escalonador.length; i++){
-      if(fila.escalonador.length === i+1 && fila.escalonador[i].momento < agendaChegada){
-        fila.escalonador.push({
+    for(let i = 0; i < escalonadorGlobal.length; i++){
+      if(escalonadorGlobal.length === i+1 && escalonadorGlobal[i].momento < agendaChegada){
+        escalonadorGlobal.push({
+          fila: fila,
           momento: agendaChegada,
           tipo: 'CHEGADA'});
         break;
-      } else if(fila.escalonador[i].momento > agendaChegada){
-        fila.escalonador.splice(i, 0, {momento: agendaChegada,tipo: 'CHEGADA'});
+      } else if(escalonadorGlobal[i].momento > agendaChegada){
+        escalonadorGlobal.splice(i, 0, {fila: fila, momento: agendaChegada, tipo: 'CHEGADA'});
         break;
       }
     }
@@ -319,26 +348,29 @@ function agendarSaida(fila, servidores, momentoAtual, nextMomento, minServico, m
     fila.probabilidadesEstadosFila[fila.condicaoFila] = fila.probabilidadesEstadosFila[fila.condicaoFila] + momentoAtual;
   }
 
-  numAtendimentos++;
+  fila.numAtendimentos++;
+  numAtendimentosGlobal++;
   fila.condicaoFila--;
   if(fila.condicaoFila >= servidores){
     agendaSaida = nextMomento + uniforme(minServico, maxServico);
 
-    if(fila.escalonador.length === 0){
-      fila.escalonador.push({
+    if(escalonadorGlobal.length === 0){
+      escalonadorGlobal.push({
+        fila: fila,
         momento: agendaSaida,
         tipo: 'SAIDA'
         });
     } else {
-      for(let i = 0; i < fila.escalonador.length; i++){
-        if(fila.escalonador.length === i+1 && fila.escalonador[i].momento < agendaSaida){
-          fila.escalonador.push({
+      for(let i = 0; i < escalonadorGlobal.length; i++){
+        if(escalonadorGlobal.length === i+1 && escalonadorGlobal[i].momento < agendaSaida){
+          escalonadorGlobal.push({
+            fila: fila,
             momento: agendaSaida,
             tipo: 'SAIDA'
           });
           break;
-        } else if(fila.escalonador[i].momento > agendaSaida){
-          fila.escalonador.splice(i, 0, {momento: agendaSaida, tipo: 'SAIDA'});
+        } else if(escalonadorGlobal[i].momento > agendaSaida){
+          escalonadorGlobal.splice(i, 0, {fila: fila, momento: agendaSaida, tipo: 'SAIDA'});
           break;
           }
       }
