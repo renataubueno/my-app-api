@@ -7,6 +7,7 @@ let tempoMax = 0;
 let numChegadasGlobal = 0;
 let numAtendimentosGlobal = 0;
 let escalonadorGlobal = [];
+let filasGlobal = [];
 let momentoAnterior = 0;
 let momentoAtual = 0;
 
@@ -25,6 +26,7 @@ exports.simulacaoGET = function () {
 
 exports.simulacaoPOST = dados => {
   let resultado = '';
+  filasGlobal = dados.objSimulacao;
   let fila = dados.objSimulacao.filter(item => item.tipo === 'UNIFORME');
 
   let seed = dados.seeder;
@@ -45,8 +47,6 @@ exports.simulacaoPOST = dados => {
     momentoAtual = 0;
     escalonadorGlobal = [];
     random.use(seedrandom(seed));
-    //let numAleatorio = geraAleatorio();
-    //console.log('NUM ALEATORIO: ', numAleatorio);
 
     for(let i = 0; i < fila.length; i++){
       fila[i].probabilidadesEstadosFila = Array(fila[i].capacidade+1);
@@ -57,11 +57,31 @@ exports.simulacaoPOST = dados => {
     for(let i = 0; i < temEntrada.length; i++){
       for(let j = 0; j < temEntrada[i].chegadas.length; j++){
         if(temEntrada[i].chegadas[j].origem === 'Entrada'){
-          escalonadorGlobal.push({
-            fila: temEntrada[i],
-            momento: parseInt(temEntrada[i].chegadas[j].chegada),
-            tipo: 'CHEGADA'
-          });
+          let momentoCurrent = parseInt(temEntrada[i].chegadas[j].chegada);
+          console.log('momento current: ', momentoCurrent);
+          if(escalonadorGlobal.length === 0){
+            console.log('ESCALONADOR GLOBAL VAZIO');
+            escalonadorGlobal.push({
+              fila: temEntrada[i],
+              momento: momentoCurrent,
+              tipo: 'CHEGADA'
+            });
+          } else {
+            console.log('ESCALONADOR GLOBAL JÁ TEM CONTEÚDO');
+            for(let k = 0; k < escalonadorGlobal.length; k++){
+              if(escalonadorGlobal.length === k+1 && escalonadorGlobal[k].momento < momentoCurrent){
+                escalonadorGlobal.push({
+                  fila: temEntrada[i],
+                  momento: momentoCurrent,
+                  tipo: 'CHEGADA'
+                });
+                break;
+              } else if(escalonadorGlobal[k].momento >= momentoCurrent){
+                escalonadorGlobal.splice(k, 0, {fila: temEntrada[i], momento: momentoCurrent, tipo: 'CHEGADA'});
+                break;
+              };
+            };
+          }
         };
       };
     };
@@ -103,18 +123,35 @@ exports.simulacaoPOST = dados => {
     for(let i = 0; i < temEntrada.length; i++){
       for(let j = 0; j < temEntrada[i].chegadas.length; j++){
         if(temEntrada[i].chegadas[j].origem === 'Entrada'){
-          escalonadorGlobal.push({
-            fila: temEntrada[i],
-            momento: parseInt(temEntrada[i].chegadas[j].chegada),
-            tipo: 'CHEGADA'
-          });
+          let momentoCurrent = parseInt(temEntrada[i].chegadas[j].chegada);
+          console.log('momento current: ', momentoCurrent);
+          if(escalonadorGlobal.length === 0){
+            escalonadorGlobal.push({
+              fila: temEntrada[i],
+              momento: momentoCurrent,
+              tipo: 'CHEGADA'
+            });
+          } else {
+            for(let k = 0; k < escalonadorGlobal.length; k++){
+              if(escalonadorGlobal.length === k+1 && escalonadorGlobal[k].momento < momentoCurrent){
+                escalonadorGlobal.push({
+                  fila: temEntrada[i],
+                  momento: momentoCurrent,
+                  tipo: 'CHEGADA'
+                });
+                break;
+              } else if(escalonadorGlobal[k].momento >= momentoCurrent){
+                escalonadorGlobal.splice(k, 0, {fila: temEntrada[i], momento: momentoCurrent, tipo: 'CHEGADA'});
+                break;
+              };
+            };
+          }
         };
       };
     };
 
     while(escalonadorGlobal.length !== 0 && momentoAnterior < tempoMax){
       let nextFila = escalonadorGlobal[0].fila;
-      console.log('probabilidadesEstadosFila LOGO NO INICIO! ', nextFila.probabilidadesEstadosFila);
       let resultadoSimulacao = tratamentoCondParadaTempo(nextFila, tempoMax, seed);
       let jaExiste = filaRetorno.filter(item => item.id === resultadoSimulacao.id);
       if(jaExiste.length > 0){
@@ -195,6 +232,8 @@ function simulacaoTempo(fila, tempoMax, seed){
 
   let agendaChegada = 0;
   let agendaSaida = 0;
+  let filaOrigem = {};
+  let filaDestino = {};
   //tenho que pegar todas as infos que preciso dos objetos e salvar em objetos locais
   let minChegada = fila.minChegada;
   let maxChegada = fila.maxChegada;
@@ -214,20 +253,35 @@ function simulacaoTempo(fila, tempoMax, seed){
   console.log('MOMENTO ATUAL LOGO NO INICIO: ', momentoAtual);
   console.log('MOMENTO ANTERIOR LOGO NO INICIO: ', momentoAnterior);
 
+  for(let i = 0; i < filasGlobal.length; i++){
+    if(filasGlobal[i].probabilidadesEstadosFila[filasGlobal[i].condicaoFila] === undefined){
+      filasGlobal[i].probabilidadesEstadosFila[filasGlobal[i].condicaoFila] = momentoAtual;
+    } else {
+      filasGlobal[i].probabilidadesEstadosFila[filasGlobal[i].condicaoFila] = filasGlobal[i].probabilidadesEstadosFila[filasGlobal[i].condicaoFila] + momentoAtual;
+    };
+  }
+
   if(next.tipo === 'CHEGADA'){
     next.fila.numChegadas++;
     numChegadasGlobal++;
-    console.log('TENTANDO AGENDAR CHEGADA');
-    agendarChegada(fila, capacidade, servidores, momentoAtual, nextMomento, minServico, maxServico, minChegada, maxChegada);
+    agendarChegada(fila, capacidade, servidores, nextMomento, minServico, maxServico, minChegada, maxChegada);
+  } else if (next.tipo === 'FILA'){
+    filaDestino = fila;
+    for(let i = 0; i < filasGlobal.length; i++){
+      if(filasGlobal[i].id === fila.chegadas[0].origem){
+        filaOrigem = filasGlobal[i];
+      }
+    };
+    agendarFila(filaOrigem, filaDestino, nextMomento);
   } else {
-    agendarSaida(fila, servidores, momentoAtual, nextMomento, minServico, maxServico);
+    agendarSaida(fila, servidores, nextMomento, minServico, maxServico);
   }
 
   let tempoTotal = momentoAnterior;
   let tempoOcupada = momentoAnterior - fila.probabilidadesEstadosFila[0];
   console.log('TEMPO TOTAL: ', tempoTotal);
   console.log('TEMPO OCUPADA: ', tempoOcupada);
-  console.log('PROBABILIDADE DE ESTADOS DA FILA - FINAL: ', fila.probabilidadesEstadosFila);
+  //console.log('PROBABILIDADE DE ESTADOS DA FILA - FINAL: ', fila.probabilidadesEstadosFila);
 
   fila.tempoOcupada = tempoOcupada;
   fila.tempoTotal = tempoTotal;
@@ -292,37 +346,80 @@ function uniforme(min, max){
   return (max - min) * numAleatorio + min;
 }
 
-function agendarChegada(fila, capacidade, servidores, momentoAtual, nextMomento, minServico, maxServico, minChegada, maxChegada){
-  if(fila.probabilidadesEstadosFila[fila.condicaoFila] === undefined){
-    fila.probabilidadesEstadosFila[fila.condicaoFila] = momentoAtual;
+function agendarChegada(fila, capacidade, servidores, nextMomento, minServico, maxServico, minChegada, maxChegada){
+  let paraSaida = false;
+  let paraFila = false;
+  let filaOrigem = {};
+  let filaDestino = {};
+
+  //flags para ver se essa fila sai para outra fila e/ou para fora do sistema
+  //como estou fazendo filas em tandem, só tenho uma conexão, mas isso vai precisar ser adaptado depois
+  if(fila.saidas[0].destino === 'Saída'){
+    paraSaida = true;
   } else {
-    fila.probabilidadesEstadosFila[fila.condicaoFila] = fila.probabilidadesEstadosFila[fila.condicaoFila] + momentoAtual;
-  };
+    paraFila = true;
+  }
 
   if(fila.condicaoFila < capacidade){
     fila.condicaoFila++;
     if(fila.condicaoFila <= servidores){
-      console.log('AGENDANDO SAIDA');
-      let agendaSaida = nextMomento + uniforme(minServico, maxServico);
+      //aqui tenho que ver se agendo para outra fila ou se agendo uma saida
+      //agendo fila
+      if(paraFila === true){
+        filaOrigem = fila;
+        for(let i = 0; i < filasGlobal.length; i++){
+          if(filasGlobal[i].id === fila.saidas[0].destino){
+            filaDestino = filasGlobal[i];
+          }
+        };
 
-      if(escalonadorGlobal.length === 0){
-        escalonadorGlobal.push({
-          fila: fila,
-          momento: agendaSaida,
-          tipo: 'SAIDA'
-        });
+        let agendaFila = nextMomento + uniforme(minServico, maxServico);
+
+        if(escalonadorGlobal.length === 0){
+          escalonadorGlobal.push({
+            fila: filaDestino,
+            momento: agendaFila,
+            tipo: 'FILA'
+          });
+        } else {
+          for(let i = 0; i < escalonadorGlobal.length; i++){
+            if(escalonadorGlobal.length === i+1 && escalonadorGlobal[i].momento < agendaFila){
+              escalonadorGlobal.push({
+                fila: filaDestino,
+                momento: agendaFila,
+                tipo: 'FILA'
+              });
+              break;
+            } else if(escalonadorGlobal[i].momento > agendaFila){
+              escalonadorGlobal.splice(i, 0, {fila: filaDestino, momento: agendaFila, tipo: 'FILA'});
+              break;
+            }
+          }
+        }
+      //agendaSaida
       } else {
-        for(let i = 0; i < escalonadorGlobal.length; i++){
-          if(escalonadorGlobal.length === i+1 && escalonadorGlobal[i].momento < agendaSaida){
-            escalonadorGlobal.push({
-              fila: fila,
-              momento: agendaSaida,
-              tipo: 'SAIDA'
-            });
-            break;
-          } else if(escalonadorGlobal[i].momento > agendaSaida){
-            escalonadorGlobal.splice(i, 0, {fila: fila, momento: agendaSaida, tipo: 'SAIDA'});
-            break;
+        console.log('AGENDANDO SAIDA');
+        let agendaSaida = nextMomento + uniforme(minServico, maxServico);
+
+        if(escalonadorGlobal.length === 0){
+          escalonadorGlobal.push({
+            fila: fila,
+            momento: agendaSaida,
+            tipo: 'SAIDA'
+          });
+        } else {
+          for(let i = 0; i < escalonadorGlobal.length; i++){
+            if(escalonadorGlobal.length === i+1 && escalonadorGlobal[i].momento < agendaSaida){
+              escalonadorGlobal.push({
+                fila: fila,
+                momento: agendaSaida,
+                tipo: 'SAIDA'
+              });
+              break;
+            } else if(escalonadorGlobal[i].momento > agendaSaida){
+              escalonadorGlobal.splice(i, 0, {fila: fila, momento: agendaSaida, tipo: 'SAIDA'});
+              break;
+            }
           }
         }
       }
@@ -355,13 +452,117 @@ function agendarChegada(fila, capacidade, servidores, momentoAtual, nextMomento,
   return true;
 }
 
-function agendarSaida(fila, servidores, momentoAtual, nextMomento, minServico, maxServico){
-  if(fila.probabilidadesEstadosFila[fila.condicaoFila] === undefined){
-    fila.probabilidadesEstadosFila[fila.condicaoFila] = momentoAtual;
+function agendarFila(filaOrigem, filaDestino, nextMomento){
+  let paraSaida = false;
+  let paraFila = false;
+  let novaFilaOrigem = {};
+  let novaFilaDestino = {};
+
+  if(filaDestino.saidas[0].destino === 'Saída'){
+    paraSaida = true;
   } else {
-    fila.probabilidadesEstadosFila[fila.condicaoFila] = fila.probabilidadesEstadosFila[fila.condicaoFila] + momentoAtual;
+    paraFila = true;
   }
 
+  filaOrigem.numAtendimentos++;
+  numAtendimentosGlobal++;
+  filaOrigem.condicaoFila--;
+
+  if(filaOrigem.condicaoFila >= filaOrigem.servidores){
+    let agendaFila = nextMomento + uniforme(filaOrigem.minServico, filaOrigem.maxServico);
+
+    if(escalonadorGlobal.length === 0){
+      escalonadorGlobal.push({
+        fila: filaDestino,
+        momento: agendaFila,
+        tipo: 'FILA'
+      });
+    } else {
+      for(let i = 0; i < escalonadorGlobal.length; i++){
+        if(escalonadorGlobal.length === i+1 && escalonadorGlobal[i].momento < agendaFila){
+          escalonadorGlobal.push({
+            fila: filaDestino,
+            momento: agendaFila,
+            tipo: 'FILA'
+          });
+          break;
+        } else if(escalonadorGlobal[i].momento > agendaFila){
+          escalonadorGlobal.splice(i, 0, {fila: filaDestino, momento: agendaFila, tipo: 'FILA'});
+          break;
+        }
+      }
+    }
+  };
+
+  if(filaDestino.condicaoFila < filaDestino.capacidade){
+    filaDestino.condicaoFila++;
+    filaDestino.numChegadas++;
+    if(filaDestino.condicaoFila <= filaDestino.servidores){
+      if(paraFila === true){
+        novaFilaOrigem = filaDestino;
+        for(let i = 0; i < filasGlobal.length; i++){
+          if(filasGlobal[i].id === novaFilaOrigem.saidas[0].destino){
+            novaFilaDestino = filasGlobal[i];
+          }
+        };
+
+        let agendaFila = nextMomento + uniforme(novaFilaOrigem.minServico, novaFilaOrigem.maxServico);
+
+        if(escalonadorGlobal.length === 0){
+          escalonadorGlobal.push({
+            fila: novaFilaDestino,
+            momento: agendaFila,
+            tipo: 'FILA'
+          });
+        } else {
+          for(let i = 0; i < escalonadorGlobal.length; i++){
+            if(escalonadorGlobal.length === i+1 && escalonadorGlobal[i].momento < agendaFila){
+              escalonadorGlobal.push({
+                fila: novaFilaDestino,
+                momento: agendaFila,
+                tipo: 'FILA'
+              });
+              break;
+            } else if(escalonadorGlobal[i].momento > agendaFila){
+              escalonadorGlobal.splice(i, 0, {fila: novaFilaDestino, momento: agendaFila, tipo: 'FILA'});
+              break;
+            }
+          }
+        }
+      } else {
+        console.log('AGENDANDO SAIDA');
+        let agendaSaida = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
+
+        if(escalonadorGlobal.length === 0){
+          escalonadorGlobal.push({
+            fila: filaDestino,
+            momento: agendaSaida,
+            tipo: 'SAIDA'
+          });
+        } else {
+          for(let i = 0; i < escalonadorGlobal.length; i++){
+            if(escalonadorGlobal.length === i+1 && escalonadorGlobal[i].momento < agendaSaida){
+              escalonadorGlobal.push({
+                fila: filaDestino,
+                momento: agendaSaida,
+                tipo: 'SAIDA'
+              });
+              break;
+            } else if(escalonadorGlobal[i].momento > agendaSaida){
+              escalonadorGlobal.splice(i, 0, {fila: filaDestino, momento: agendaSaida, tipo: 'SAIDA'});
+              break;
+            }
+          }
+        }
+      }
+    };
+  };
+
+  console.log('ENTREI NO AGENDARFILA YAY: ', filaDestino);
+  return true;
+}
+
+function agendarSaida(fila, servidores, nextMomento, minServico, maxServico){
   fila.numAtendimentos++;
   numAtendimentosGlobal++;
   fila.condicaoFila--;
@@ -415,9 +616,7 @@ function calculaProbabilidadesEstadosFila(tempoTotal, probEstadosFila){
   let x = 0;
 
   for(let i = 0; i < probEstadosFila.length; i++){
-    console.log('QUAL O VALOR DO probEstadosFila[i]? ', probEstadosFila[i]);
     if(probEstadosFila[i] === undefined) {
-      console.log('ENTREI NO CASO DO UNDEFINED');
       x = 0;
     } else {
       x = (probEstadosFila[i] * 100)/tempoTotal;
