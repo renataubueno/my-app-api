@@ -194,6 +194,9 @@ function tratamentoCondParadaChegadas(fila, numChegadasMax, seed){
   let vazao = calculaVazao(tempoOcupada, tempoTotal);
   let utilizacao = calculaUtilizacao(numAtendimentos, tempoTotal);
   let tempoMedioServico = calculaTempoMedioServico(numAtendimentos, tempoOcupada);
+  if(numAtendimentos === 0 || tempoOcupada === 0){
+    tempoMedioServico = 0
+  };
   let probabilidadesEstadosFila = calculaProbabilidadesEstadosFila(tempoTotal, probEstadosFila);
 
   return {
@@ -222,6 +225,11 @@ function tratamentoCondParadaTempo(fila, tempoMax, seed){
   let vazao = calculaVazao(tempoOcupada, tempoTotal);
   let utilizacao = calculaUtilizacao(numAtendimentos, tempoTotal);
   let tempoMedioServico = calculaTempoMedioServico(numAtendimentos, tempoOcupada);
+  if(numAtendimentos === 0 || tempoOcupada === 0){
+    tempoMedioServico = 0
+  };
+
+  console.log('VOU CALCULAR A PROBABILIDADE DE ESTADOS DA FILA: ', fila);
   let probabilidadesEstadosFila = calculaProbabilidadesEstadosFila(tempoTotal, probEstadosFila);
 
   return {
@@ -260,8 +268,6 @@ function simulacaoTempo(fila, tempoMax, seed){
   nextMomento = next.momento;
   momentoAtual = nextMomento - momentoAnterior;
   momentoAnterior = nextMomento;
-  console.log('MOMENTO ATUAL LOGO NO INICIO: ', momentoAtual);
-  console.log('MOMENTO ANTERIOR LOGO NO INICIO: ', momentoAnterior);
 
   for(let i = 0; i < filasGlobal.length; i++){
     if(filasGlobal[i].probabilidadesEstadosFila[filasGlobal[i].condicaoFila] === undefined){
@@ -289,9 +295,8 @@ function simulacaoTempo(fila, tempoMax, seed){
 
   let tempoTotal = momentoAnterior;
   let tempoOcupada = momentoAnterior - fila.probabilidadesEstadosFila[0];
-  console.log('TEMPO TOTAL: ', tempoTotal);
-  console.log('TEMPO OCUPADA: ', tempoOcupada);
-  //console.log('PROBABILIDADE DE ESTADOS DA FILA - FINAL: ', fila.probabilidadesEstadosFila);
+  console.log('FILA! ', fila);
+  console.log('PROBABILIDADE DE ESTADOS DA FILA - FINAL: ', fila.probabilidadesEstadosFila);
 
   fila.tempoOcupada = tempoOcupada;
   fila.tempoTotal = tempoTotal;
@@ -322,8 +327,6 @@ function simulacaoChegada(fila, numChegadasMax, seed){
   nextMomento = next.momento;
   momentoAtual = nextMomento - momentoAnterior;
   momentoAnterior = nextMomento;
-  console.log('MOMENTO ATUAL LOGO NO INICIO: ', momentoAtual);
-  console.log('MOMENTO ANTERIOR LOGO NO INICIO: ', momentoAnterior);
 
   for(let i = 0; i < filasGlobal.length; i++){
     if(filasGlobal[i].probabilidadesEstadosFila[filasGlobal[i].condicaoFila] === undefined){
@@ -336,7 +339,6 @@ function simulacaoChegada(fila, numChegadasMax, seed){
   if(next.tipo === 'CHEGADA'){
     next.fila.numChegadas++;
     numChegadasGlobal++;
-    console.log('TENTANDO AGENDAR CHEGADA');
     agendarChegada(fila, capacidade, servidores, nextMomento, minServico, maxServico, minChegada, maxChegada);
   } else if (next.tipo === 'FILA'){
     filaDestino = fila;
@@ -352,8 +354,7 @@ function simulacaoChegada(fila, numChegadasMax, seed){
 
   let tempoTotal = momentoAnterior;
   let tempoOcupada = momentoAnterior - fila.probabilidadesEstadosFila[0];
-  console.log('TEMPO TOTAL: ', tempoTotal);
-  console.log('TEMPO OCUPADA: ', tempoOcupada);
+  console.log('FILA! ', fila);
   console.log('PROBABILIDADE DE ESTADOS DA FILA - FINAL: ', fila.probabilidadesEstadosFila);
 
   fila.tempoOcupada = tempoOcupada;
@@ -364,7 +365,6 @@ function simulacaoChegada(fila, numChegadasMax, seed){
 
 function geraAleatorio(){
   let numAleatorio = random.float(min = 0, max = 1);
-  console.log('NUM ALEATORIO DENTRO DO GERA ALEATORIO: ', numAleatorio );
 
   return numAleatorio;
 }
@@ -386,10 +386,8 @@ function agendarChegada(fila, capacidade, servidores, nextMomento, minServico, m
       for(let i = 0; i < fila.saidas.length; i++){
         //caso seja a última saída da lista de saídas, vai ser essa que vai ser agendada
         if(saiu === false && fila.saidas.length === i+1){
-          console.log('ENTREI NO CASO DE QUE SOU O ÚLTIMO ELEMENTO DAS SAÍDAS');
           //caso essa última saída tenha como destino a Saída, chama o agendaSaida
           if(fila.saidas[i].destino === 'Saída'){
-            console.log('AGENDANDO SAIDA');
             let agendaSaida = nextMomento + uniforme(minServico, maxServico);
 
             if(escalonadorGlobal.length === 0){
@@ -454,10 +452,8 @@ function agendarChegada(fila, capacidade, servidores, nextMomento, minServico, m
         }
         let numAleatorio = geraAleatorio();
         if(saiu === false && numAleatorio < (fila.saidas[i].porcentagem)/100){
-          console.log('ENTREI NO CASO DE QUE NÃO SOU O ÚLTIMO ELEMENTO DAS SAÍDAS! NUMALEATORIO GERADO: ', numAleatorio);
           //caso essa saída tenha como destino a Saída, chama o agendaSaida
           if(fila.saidas[i].destino === 'Saída'){
-            console.log('AGENDANDO SAIDA');
             let agendaSaida = nextMomento + uniforme(minServico, maxServico);
 
             if(escalonadorGlobal.length === 0){
@@ -524,7 +520,6 @@ function agendarChegada(fila, capacidade, servidores, nextMomento, minServico, m
     };
   };
 
-  console.log('AGENDANDO CHEGADA');
   let agendaChegada =  nextMomento + uniforme(minChegada, maxChegada);
 
   if(escalonadorGlobal.length === 0){
@@ -558,9 +553,6 @@ function agendarFila(filaOrigem, filaDestino, nextMomento){
   let saiu = false;
   let novaFilaOrigem = {};
   let novaFilaDestino = {};
-
-  console.log('AGENDAR FILA - filaOrigem: ', filaOrigem);
-  console.log('AGENDAR FILA - filaDestino: ', filaDestino);
 
   filaOrigem.numAtendimentos++;
   numAtendimentosGlobal++;
@@ -696,77 +688,8 @@ function agendarFila(filaOrigem, filaDestino, nextMomento){
     if(filaDestino.condicaoFila <= filaDestino.servidores){
       for(let i = 0; i < filaDestino.saidas.length; i++){
         if(saiu === false && filaDestino.saidas.length === i+1){
-          console.log('ENTREI PARA AGENDAR O DESTINO DA FILA 1 E SOU A ULTIMA SAIDA');
           if(filaDestino.saidas[i].destino === 'Saída'){
             console.log('AGENDANDO SAIDA');
-            let agendaSaida = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
-
-            if(escalonadorGlobal.length === 0){
-              escalonadorGlobal.push({
-                fila: filaDestino,
-                momento: agendaSaida,
-                tipo: 'SAIDA',
-                agendadoPor: filaDestino.id
-              });
-            } else {
-              for(let j = 0; j < escalonadorGlobal.length; j++){
-                if(escalonadorGlobal.length === j+1 && escalonadorGlobal[j].momento < agendaSaida){
-                  escalonadorGlobal.push({
-                    fila: filaDestino,
-                    momento: agendaSaida,
-                    tipo: 'SAIDA',
-                    agendadoPor: filaDestino.id
-                  });
-                  break;
-                } else if(escalonadorGlobal[j].momento > agendaSaida){
-                  escalonadorGlobal.splice(j, 0, {fila: filaDestino, momento: agendaSaida, tipo: 'SAIDA', agendadoPor: filaDestino.id});
-                  break;
-                }
-              }
-            }
-          } else {
-            for(let i = 0; i < filasGlobal.length; i++){
-              if(filasGlobal[i].id === filaDestino.saidas[i].destino){
-                novaFilaDestino = filasGlobal[i];
-              }
-            };
-
-            console.log('AGENDAR FILA - segundo caso - ultima saida - filaOrigem: ', filaOrigem);
-            console.log('AGENDAR FILA - segundo caso - ultima saida - filaDestino: ', filaDestino);
-            console.log('AGENDAR FILA - segundo caso - ultima saida - novaFilaDestino: ', novaFilaDestino);
-
-            let agendaFila = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
-
-            if(escalonadorGlobal.length === 0){
-              escalonadorGlobal.push({
-                fila: novaFilaDestino,
-                momento: agendaFila,
-                tipo: 'FILA',
-                agendadoPor: filaDestino.id
-              });
-            } else {
-              for(let j = 0; j < escalonadorGlobal.length; j++){
-                if(escalonadorGlobal.length === j+1 && escalonadorGlobal[j].momento < agendaFila){
-                  escalonadorGlobal.push({
-                    fila: novaFilaDestino,
-                    momento: agendaFila,
-                    tipo: 'FILA',
-                    agendadoPor: filaDestino.id
-                  });
-                  break;
-                } else if(escalonadorGlobal[j].momento > agendaFila){
-                  escalonadorGlobal.splice(j, 0, {fila: novaFilaDestino, momento: agendaFila, tipo: 'FILA', agendadoPor: filaDestino.id});
-                  break;
-                }
-              }
-            }
-          };
-          saiu = true;
-        }
-        let numAleatorio = geraAleatorio();
-        if(saiu === false && numAleatorio < (filaDestino.saidas[i].porcentagem/100)){
-          if(filaDestino.saidas[i].destino === 'Saída'){
-            console.log('ENTREI PARA AGENDAR O DESTINO DA FILA 1 E NÃO SOU A ULTIMA SAIDA', numAleatorio);
             let agendaSaida = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
 
             if(escalonadorGlobal.length === 0){
@@ -799,9 +722,68 @@ function agendarFila(filaOrigem, filaDestino, nextMomento){
               }
             };
 
-            console.log('AGENDAR FILA - segundo caso - nao é ultima saida - filaOrigem: ', filaOrigem);
-            console.log('AGENDAR FILA - segundo caso - nao é ultima saida - filaDestino: ', filaDestino);
-            console.log('AGENDAR FILA - segundo caso - nao é ultima saida - novaFilaDestino: ', novaFilaDestino);
+            let agendaFila = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
+
+            if(escalonadorGlobal.length === 0){
+              escalonadorGlobal.push({
+                fila: novaFilaDestino,
+                momento: agendaFila,
+                tipo: 'FILA',
+                agendadoPor: filaDestino.id
+              });
+            } else {
+              for(let j = 0; j < escalonadorGlobal.length; j++){
+                if(escalonadorGlobal.length === j+1 && escalonadorGlobal[j].momento < agendaFila){
+                  escalonadorGlobal.push({
+                    fila: novaFilaDestino,
+                    momento: agendaFila,
+                    tipo: 'FILA',
+                    agendadoPor: filaDestino.id
+                  });
+                  break;
+                } else if(escalonadorGlobal[j].momento > agendaFila){
+                  escalonadorGlobal.splice(j, 0, {fila: novaFilaDestino, momento: agendaFila, tipo: 'FILA', agendadoPor: filaDestino.id});
+                  break;
+                }
+              }
+            }
+          };
+          saiu = true;
+        }
+        let numAleatorio = geraAleatorio();
+        if(saiu === false && numAleatorio < (filaDestino.saidas[i].porcentagem/100)){
+          if(filaDestino.saidas[i].destino === 'Saída'){
+            let agendaSaida = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
+
+            if(escalonadorGlobal.length === 0){
+              escalonadorGlobal.push({
+                fila: filaDestino,
+                momento: agendaSaida,
+                tipo: 'SAIDA',
+                agendadoPor: filaDestino.id
+              });
+            } else {
+              for(let j = 0; j < escalonadorGlobal.length; j++){
+                if(escalonadorGlobal.length === j+1 && escalonadorGlobal[j].momento < agendaSaida){
+                  escalonadorGlobal.push({
+                    fila: filaDestino,
+                    momento: agendaSaida,
+                    tipo: 'SAIDA',
+                    agendadoPor: filaDestino.id
+                  });
+                  break;
+                } else if(escalonadorGlobal[j].momento > agendaSaida){
+                  escalonadorGlobal.splice(j, 0, {fila: filaDestino, momento: agendaSaida, tipo: 'SAIDA', agendadoPor: filaDestino.id});
+                  break;
+                }
+              }
+            }
+          } else {
+            for(let j = 0; j < filasGlobal.length; j++){
+              if(filasGlobal[j].id === filaDestino.saidas[i].destino){
+                novaFilaDestino = filasGlobal[j];
+              }
+            };
 
             let agendaFila = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
 
@@ -849,10 +831,8 @@ function agendarSaida(fila, servidores, nextMomento, minServico, maxServico){
     for(let i = 0; i < fila.saidas.length; i++){
       //caso seja a última saída da lista de saídas, vai ser essa que vai ser agendada
       if(saiu === false && fila.saidas.length === i+1){
-        console.log('ENTREI NO CASO DE QUE SOU O ÚLTIMO ELEMENTO DAS SAÍDAS');
         //caso essa última saída tenha como destino a Saída, chama o agendaSaida
         if(fila.saidas[i].destino === 'Saída'){
-          console.log('AGENDANDO SAIDA');
           let agendaSaida = nextMomento + uniforme(minServico, maxServico);
 
           if(escalonadorGlobal.length === 0){
@@ -917,7 +897,6 @@ function agendarSaida(fila, servidores, nextMomento, minServico, maxServico){
       }
       let numAleatorio = geraAleatorio();
       if(saiu === false && numAleatorio < (fila.saidas[i].porcentagem)/100){
-        console.log('ENTREI NO CASO DE QUE NÃO SOU O ÚLTIMO ELEMENTO DAS SAÍDAS! NUMALEATORIO GERADO: ', numAleatorio);
         //caso essa saída tenha como destino a Saída, chama o agendaSaida
         if(fila.saidas[i].destino === 'Saída'){
           console.log('AGENDANDO SAIDA');
@@ -1017,6 +996,7 @@ function calculaProbabilidadesEstadosFila(tempoTotal, probEstadosFila){
     probEstadosFilaTratado.push(x);
   }
 
+  console.log('PROB ESTADOS FILA: ', probEstadosFila);
   console.log('PROBABILIDADE ESTADO TRATADO', probEstadosFilaTratado);
   return probEstadosFilaTratado;
 }
