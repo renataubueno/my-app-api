@@ -3,11 +3,11 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-var cors = require('cors')
+var cors = require('cors');
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
-var simulacaoRouter = require('./routes/simulacao');
+var simulacaoRouter = require('./routes/simulacao'); //rota para o arquivo de simulacao
 
 var app = express();
 
@@ -24,7 +24,7 @@ app.use(cors());
 
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
-app.use('/simulacao', simulacaoRouter);
+app.use('/simulacao', simulacaoRouter); //usando a rota de simulacao
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
