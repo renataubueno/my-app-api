@@ -192,6 +192,7 @@ function tratamentoCondParadaChegadas(fila, numChegadasMax, seed){
 
   let numChegadas = fila.numChegadas;
   let numAtendimentos = fila.numAtendimentos;
+  let numPerdas = fila.perdas;
   let tempoOcupada = fila.tempoOcupada;
   let tempoTotal = momentoAnterior;
   let probEstadosFila = fila.probabilidadesEstadosFila;
@@ -208,6 +209,7 @@ function tratamentoCondParadaChegadas(fila, numChegadasMax, seed){
       id: fila.id, //id da fila
       numChegadas: numChegadas,
       numAtendimentos: numAtendimentos,
+      numPerdas: numPerdas,
       tempoOcupada: tempoOcupada,
       taxaChegada: taxaChegada,
       vazao: vazao,
@@ -223,6 +225,7 @@ function tratamentoCondParadaTempo(fila, tempoMax, seed){
   /* Variáveis de cada fila, independem da chegada global, ou de outras filas */
   let numChegadas = fila.numChegadas;
   let numAtendimentos = fila.numAtendimentos;
+  let numPerdas = fila.perdas;
   let tempoOcupada = fila.tempoOcupada;
   /* São variáveis que vão ter que ser computadas no final como um todo */
   /* O tempo total é o tempo total do sistema, não de cada fila */
@@ -242,6 +245,7 @@ function tratamentoCondParadaTempo(fila, tempoMax, seed){
     id: fila.id, //id da fila
     numChegadas: numChegadas,
     numAtendimentos: numAtendimentos,
+    numPerdas: numPerdas,
     tempoOcupada: tempoOcupada,
     taxaChegada: taxaChegada,
     vazao: vazao,
@@ -523,6 +527,7 @@ function agendarFila(filaOrigem, filaDestino, nextMomento){
 
   if(filaDestino.condicaoFila > filaDestino.capacidade){
     filaDestino.condicaoFila = filaDestino.capacidade;
+    filaDestino.perdas++;
   };
 
   //console.log('CONDIÇÃO DA FILA DE DESTINO NO AGENDARFILA APÓS O INCREMENTO: ', filaDestino);
