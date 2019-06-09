@@ -27,6 +27,10 @@ exports.simulacaoPOST = dados => {
   let resultado = '';
   filasGlobal = dados.objSimulacao;
   let fila = dados.objSimulacao.filter(item => item.tipo === 'UNIFORME');
+  if(fila.length === 0){
+    fila = dados.objSimulacao.filter(item => item.tipo === 'EXPONENCIAL');
+  }
+  console.log('TIPO DA FILA! ', fila);
 
   let seed = dados.seeder;
 
@@ -372,7 +376,12 @@ function agendarChegada(fila, nextMomento){
         if(saiu === false && fila.saidas.length === i + 1){
           //verifico se sou uma saída ou outra fila
           if(fila.saidas[i].destino === 'Saída'){
-            let agendaSaida = nextMomento + uniforme(fila.minServico, fila.maxServico);
+            let agendaSaida = 0;
+            if(fila.tipo === 'UNIFORME'){
+              agendaSaida = nextMomento + uniforme(fila.minServico, fila.maxServico);
+            } else {
+              agendaSaida = nextMomento + exponencial(fila.minServico, fila.maxServico);
+            };
             console.log('ESTOU NA FILA 1 E VOU AGENDAR PARA UMA SAIDA, SENDO QUE SOU A ULTIMA DA SUA LISTA DE SAIDAS: ');
 
             escalonadorGlobal.push({
@@ -389,7 +398,13 @@ function agendarChegada(fila, nextMomento){
             };
 
             console.log('ESTOU NA FILA 1 E VOU AGENDAR PARA UMA FILA, SENDO QUE SOU A ULTIMA DA SUA LISTA DE SAIDAS: ', filaDestino.id);
-            let agendaFila = nextMomento + uniforme(fila.minServico, fila.maxServico);
+
+            let agendaFila = 0;
+            if(fila.tipo === 'UNIFORME'){
+              agendaFila = nextMomento + uniforme(fila.minServico, fila.maxServico);
+            } else {
+              agendaFila = nextMomento + exponencial(fila.minServico, fila.maxServico);
+            };
 
             escalonadorGlobal.push({
               fila: filaDestino,
@@ -409,7 +424,12 @@ function agendarChegada(fila, nextMomento){
           //verifico se sou uma saída ou outra fila
           if(fila.saidas[i].destino === 'Saída'){
             console.log('ESTOU NA FILA 1 E VOU AGENDAR PARA UMA SAIDA, SENDO QUE NÃO SOU A ULTIMA DA SUA LISTA DE SAIDAS: ');
-            let agendaSaida = nextMomento + uniforme(fila.minServico, fila.maxServico);
+            let agendaSaida = 0;
+            if(fila.tipo === 'UNIFORME'){
+              agendaSaida = nextMomento + uniforme(fila.minServico, fila.maxServico);
+            } else {
+              agendaSaida = nextMomento + exponencial(fila.minServico, fila.maxServico);
+            };
 
             escalonadorGlobal.push({
               fila: fila,
@@ -425,7 +445,12 @@ function agendarChegada(fila, nextMomento){
             };
 
             console.log('ESTOU NA FILA 1 E VOU AGENDAR PARA UMA FILA, SENDO QUE NÃO SOU A ULTIMA DA SUA LISTA DE SAIDAS: ', filaDestino.id);
-            let agendaFila = nextMomento + uniforme(fila.minServico, fila.maxServico);
+            let agendaFila = 0;
+            if(fila.tipo === 'UNIFORME'){
+              agendaFila = nextMomento + uniforme(fila.minServico, fila.maxServico);
+            } else {
+              agendaFila = nextMomento + exponencial(fila.minServico, fila.maxServico);
+            };
 
             escalonadorGlobal.push({
               fila: filaDestino,
@@ -441,7 +466,12 @@ function agendarChegada(fila, nextMomento){
   };
 
   console.log('DEVO AGENDAR UMA NOVA CHEGADA AQUI');
-  let agendaChegada =  nextMomento + uniforme(fila.minChegada, fila.maxChegada);
+  let agendaChegada = 0;
+  if(fila.tipo === 'UNIFORME'){
+    agendaChegada =  nextMomento + uniforme(fila.minChegada, fila.maxChegada);
+  } else {
+    agendaChegada =  nextMomento + exponencial(fila.minChegada, fila.maxChegada);
+  };
 
   escalonadorGlobal.push({
     fila: fila,
@@ -474,7 +504,12 @@ function agendarFila(filaOrigem, filaDestino, nextMomento){
       if(saiuFilaOrigem === false && filaOrigem.saidas.length === i + 1){
         //verifico se sou uma saída ou outra fila
         if(filaOrigem.saidas[i].destino === 'Saída'){
-          let agendaSaida = nextMomento + uniforme(filaOrigem.minServico, filaOrigem.maxServico);
+          let agendaSaida = 0;
+          if(filaOrigem.tipo === 'UNIFORME'){
+            agendaSaida = nextMomento + uniforme(filaOrigem.minServico, filaOrigem.maxServico);
+          } else {
+            agendaSaida = nextMomento + exponencial(filaOrigem.minServico, filaOrigem.maxServico);
+          };
 
           escalonadorGlobal.push({
             fila: filaOrigem,
@@ -483,7 +518,12 @@ function agendarFila(filaOrigem, filaDestino, nextMomento){
             agendadoPor: filaOrigem.id
           });
         } else {
-          let agendaFila = nextMomento + uniforme(filaOrigem.minServico, filaOrigem.maxServico);
+          let agendaFila = 0;
+          if(filaOrigem.tipo === 'UNIFORME'){
+            agendaFila = nextMomento + uniforme(filaOrigem.minServico, filaOrigem.maxServico);
+          } else {
+            agendaFila = nextMomento + exponencial(filaOrigem.minServico, filaOrigem.maxServico);
+          };
 
           escalonadorGlobal.push({
             fila: filaDestino,
@@ -499,7 +539,12 @@ function agendarFila(filaOrigem, filaDestino, nextMomento){
       if(saiuFilaOrigem === false && numAleatorio < (filaOrigem.saidas[i].porcentagem)/100){
         //verifico se sou uma saída ou outra fila
         if(filaOrigem.saidas[i].destino === 'Saída'){
-          let agendaSaida = nextMomento + uniforme(filaOrigem.minServico, filaOrigem.maxServico);
+          let agendaSaida = 0;
+          if(filaOrigem.tipo === 'UNIFORME'){
+            agendaSaida = nextMomento + uniforme(filaOrigem.minServico, filaOrigem.maxServico);
+          } else {
+            agendaSaida = nextMomento + exponencial(filaOrigem.minServico, filaOrigem.maxServico);
+          };
 
           escalonadorGlobal.push({
             fila: filaOrigem,
@@ -508,7 +553,12 @@ function agendarFila(filaOrigem, filaDestino, nextMomento){
             agendadoPor: filaOrigem.id
           });
         } else {
-          let agendaFila = nextMomento + uniforme(filaOrigem.minServico, filaOrigem.maxServico);
+          let agendaFila = 0;
+          if(filaOrigem.tipo === 'UNIFORME'){
+            agendaFila = nextMomento + uniforme(filaOrigem.minServico, filaOrigem.maxServico);
+          } else {
+            agendaFila = nextMomento + exponencial(filaOrigem.minServico, filaOrigem.maxServico);
+          };
 
           escalonadorGlobal.push({
             fila: filaDestino,
@@ -535,10 +585,17 @@ function agendarFila(filaOrigem, filaDestino, nextMomento){
   if(filaDestino.condicaoFila <= filaDestino.servidores){
     for(let i = 0; i < filaDestino.saidas.length; i++){
       //caso seja a última saída da lista de saídas, vai ser essa que vai ser agendada
+      console.log('FILA DESTINO! ', filaDestino);
       if(saiuFilaDestino === false && filaDestino.saidas.length === i + 1){
         //verifico se sou uma saída ou outra fila
         if(filaDestino.saidas[i].destino === 'Saída'){
-          let agendaSaida = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
+          let agendaSaida = 0;
+          if(filaDestino.tipo === 'UNIFORME'){
+            agendaSaida = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
+          } else {
+            agendaSaida = nextMomento + exponencial(filaDestino.minServico, filaDestino.maxServico);
+          };
+          console.log('AGENDA SAIDA! ', agendaSaida);
 
           escalonadorGlobal.push({
             fila: filaDestino,
@@ -553,7 +610,14 @@ function agendarFila(filaOrigem, filaDestino, nextMomento){
             }
           };
 
-          let agendaFila = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
+          let agendaFila = 0;
+          if(filaDestino.tipo === 'UNIFORME'){
+            agendaFila = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
+          } else {
+            agendaFila = nextMomento + exponencial(filaDestino.minServico, filaDestino.maxServico);
+          };
+
+          console.log('AGENDA FILA! ', agendaFila);
 
           escalonadorGlobal.push({
             fila: novaFilaDestino,
@@ -569,7 +633,14 @@ function agendarFila(filaOrigem, filaDestino, nextMomento){
       if(saiuFilaDestino === false && numAleatorio < (filaDestino.saidas[i].porcentagem)/100){
         //verifico se sou uma saída ou outra fila
         if(filaDestino.saidas[i].destino === 'Saída'){
-          let agendaSaida = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
+          let agendaSaida = 0;
+          if(filaDestino.tipo === 'UNIFORME'){
+            agendaSaida = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
+          } else {
+            agendaSaida = nextMomento + exponencial(filaDestino.minServico, filaDestino.maxServico);
+          };
+
+          console.log('AGENDA SAIDA! ', agendaSaida);
 
           escalonadorGlobal.push({
             fila: filaDestino,
@@ -584,7 +655,14 @@ function agendarFila(filaOrigem, filaDestino, nextMomento){
             }
           };
 
-          let agendaFila = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
+          let agendaFila = 0;
+          if(filaDestino.tipo === 'UNIFORME'){
+            agendaFila = nextMomento + uniforme(filaDestino.minServico, filaDestino.maxServico);
+          } else {
+            agendaFila = nextMomento + exponencial(filaDestino.minServico, filaDestino.maxServico);
+          };
+
+          console.log('AGENDA FILA! ', agendaFila);
 
           escalonadorGlobal.push({
             fila: novaFilaDestino,
@@ -620,7 +698,12 @@ function agendarSaida(fila, nextMomento){
       if(saiu === false && fila.saidas.length === i + 1){
         //verifico se sou uma saída ou outra fila
         if(fila.saidas[i].destino === 'Saída'){
-          let agendaSaida = nextMomento + uniforme(fila.minServico, fila.maxServico);
+          let agendaSaida = 0;
+          if(fila.tipo === 'UNIFORME'){
+            agendaSaida = nextMomento + uniforme(fila.minServico, fila.maxServico);
+          } else {
+            agendaSaida = nextMomento + exponencial(fila.minServico, fila.maxServico);
+          };
 
           escalonadorGlobal.push({
             fila: fila,
@@ -635,7 +718,12 @@ function agendarSaida(fila, nextMomento){
             }
           };
 
-          let agendaFila = nextMomento + uniforme(fila.minServico, fila.maxServico);
+          let agendaFila = 0;
+          if(fila.tipo === 'UNIFORME'){
+            agendaFila = nextMomento + uniforme(fila.minServico, fila.maxServico);
+          } else {
+            agendaFila = nextMomento + exponencial(fila.minServico, fila.maxServico);
+          };
 
           escalonadorGlobal.push({
             fila: filaDestino,
@@ -651,7 +739,12 @@ function agendarSaida(fila, nextMomento){
       if(saiu === false && numAleatorio < (fila.saidas[i].porcentagem)/100){
         //verifico se sou uma saída ou outra fila
         if(fila.saidas[i].destino === 'Saída'){
-          let agendaSaida = nextMomento + uniforme(fila.minServico, fila.maxServico);
+          let agendaSaida = 0;
+          if(fila.tipo === 'UNIFORME'){
+            agendaSaida = nextMomento + uniforme(fila.minServico, fila.maxServico);
+          } else {
+            agendaSaida = nextMomento + exponencial(fila.minServico, fila.maxServico);
+          };
 
           escalonadorGlobal.push({
             fila: fila,
@@ -666,7 +759,12 @@ function agendarSaida(fila, nextMomento){
             }
           };
 
-          let agendaFila = nextMomento + uniforme(fila.minServico, fila.maxServico);
+          let agendaFila = 0;
+          if(fila.tipo === 'UNIFORME'){
+            agendaFila = nextMomento + uniforme(fila.minServico, fila.maxServico);
+          } else {
+            agendaFila = nextMomento + exponencial(fila.minServico, fila.maxServico);
+          };
 
           escalonadorGlobal.push({
             fila: filaDestino,
@@ -692,6 +790,18 @@ function geraAleatorio(){
 function uniforme(min, max){
   let numAleatorio = geraAleatorio();
   return (max - min) * numAleatorio + min;
+}
+
+function exponencial(min, max){
+  let numAleatorio = geraAleatorio();
+  let media = (min + max)/2;
+  console.log('MEDIA: ', media);
+  let lambda = 1/media;
+  console.log('LAMBDA: ', lambda);
+  let formula = 1 - Math.exp(-lambda*numAleatorio);
+  console.log('FORMULA: ', formula);
+  console.log('FORMULA/LAMBDA', formula/lambda);
+  return formula/lambda;
 }
 
 function calculaTaxaChegada(numChegadas, tempoTotal){
