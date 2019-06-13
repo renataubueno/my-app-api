@@ -47,7 +47,7 @@ exports.simulacaoPOST = dados => {
   for(let i = 0; i < filasGlobal.length; i++){
     filasGlobal[i].saidas.sort(ordenarProbabilidades);
     filasGlobal[i].saidas.reverse();
-    //console.log('SAIDAS: ', filasGlobal[i].saidas);
+    console.log('SAIDAS: ', filasGlobal[i].saidas);
   };
 
   if(dados.tipoParada === 'CHEGADAS'){
@@ -493,10 +493,11 @@ function agendarFila(filaOrigem, filaDestino, nextMomento){
   numAtendimentosGlobal++;
   filaOrigem.numAtendimentos++;
   filaOrigem.condicaoFila--;
-  ////console.log('CONDIÇÃO DA FILA DE ORIGEM NO AGENDARFILA APÓS O DECREMENTO: ', filaOrigem);
-  /*if(filaOrigem.condicaoFila < 0){
+
+  if(filaOrigem.condicaoFila < 0){
     filaOrigem.condicaoFila = 0;
-  }*/
+    //console.log('CONDIÇÃO DA FILA DE ORIGEM NO AGENDARFILA APÓS O DECREMENTO: ', filaOrigem);
+  }
 
   if(filaOrigem.condicaoFila >= filaOrigem.servidores){
     //console.log('RANDOM PARA AGENDAR OU FILA OU SAIDA');
@@ -688,10 +689,11 @@ function agendarSaida(fila, nextMomento){
   numAtendimentosGlobal++;
 
   fila.condicaoFila--;
-  //console.log('CONDIÇÃO DA FILA NA SAÍDA APÓS O DECREMENTO! ', fila.condicaoFila);
-  /*if(fila.condicaoFila < 0){
+
+  if(fila.condicaoFila < 0){
+    //console.log('CONDIÇÃO DA FILA NA SAÍDA APÓS O DECREMENTO! ', fila);
     fila.condicaoFila = 0;
-  }*/
+  }
 
   if(fila.condicaoFila >= fila.servidores){
     for(let i = 0; i < fila.saidas.length; i++){
@@ -834,7 +836,11 @@ function calculaUtilizacao(fila){
     } else {
       minimo = fila.servidores;
     }
+    console.log('minimo', minimo);
+    console.log('fila.servidores', fila.servidores);
     resultadoMin = minimo/fila.servidores;
+    console.log('probEstadosFilaTratado[i]', probEstadosFilaTratado[i])
+    console.log('resultadoMin', resultadoMin);
     utilizacao += resultadoMin * probEstadosFilaTratado[i];
   }
 
@@ -883,7 +889,7 @@ function calculaVazao(fila){
 }
 
 function calculaProbabilidadesEstadosFila(filaRetorno){
-  //console.log('O QUE RECEBI PARA TRATAR: ', filaRetorno);
+  console.log('O QUE RECEBI PARA TRATAR: ', filaRetorno);
   let probEstadosFilaTratado = [];
   let x = 0;
 
