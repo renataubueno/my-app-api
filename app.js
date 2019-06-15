@@ -8,6 +8,7 @@ var cors = require('cors');
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
 var simulacaoRouter = require('./routes/simulacao'); //rota para o arquivo de simulacao
+var exportarRouter = require('./routes/exportar'); //rota para o arquivo de simulacao
 
 var app = express();
 
@@ -25,6 +26,7 @@ app.use(cors());
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/simulacao', simulacaoRouter); //usando a rota de simulacao
+app.use('/exportar', exportarRouter); //usando a rota de simulacao
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {
