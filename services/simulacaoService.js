@@ -836,11 +836,11 @@ function calculaUtilizacao(fila){
     } else {
       minimo = fila.servidores;
     }
-    console.log('minimo', minimo);
-    console.log('fila.servidores', fila.servidores);
+    //console.log('minimo', minimo);
+    //console.log('fila.servidores', fila.servidores);
     resultadoMin = minimo/fila.servidores;
-    console.log('probEstadosFilaTratado[i]', probEstadosFilaTratado[i])
-    console.log('resultadoMin', resultadoMin);
+    //console.log('probEstadosFilaTratado[i]', probEstadosFilaTratado[i])
+    //console.log('resultadoMin', resultadoMin);
     utilizacao += resultadoMin * probEstadosFilaTratado[i];
   }
 
